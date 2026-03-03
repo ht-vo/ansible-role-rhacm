@@ -1,0 +1,16 @@
+---
+- name: Verify mandatory installation variables
+  ansible.builtin.assert:
+    that:
+      - rhacm_channel is defined and rhacm_channel | length > 0
+      - rhacm_version is defined and rhacm_version | length > 0
+    fail_msg: "ERROR: 'rhacm_channel' or 'rhacm_version' must be set for the installation."
+  when: "'rhacm_install' in ansible_run_tags"
+
+- name: Verify installation profile selection
+  ansible.builtin.assert:
+    that:
+      - "rhacm_install_profile in ['minimal','standard']"
+    fail_msg: "ERROR: 'rhacm_install_profile' must be either 'minimal' or 'standard'."
+  when: "'rhacm_install' in ansible_run_tags"
+...

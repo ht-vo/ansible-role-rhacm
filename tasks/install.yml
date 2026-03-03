@@ -1,0 +1,59 @@
+---
+- name: Install RHACM
+  block:
+    - name: Set the CSV name
+      ansible.builtin.set_fact:
+        rhacm_csv_name: "advanced-cluster-management.v{{ rhacm_version }}"
+
+    - name: Create the Namespace
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Namespace
+        name: "{{ rhacm_namespace }}"
+        state: present
+
+    - name: Create the OperatorGroup
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: operators.coreos.com/v1
+          kind: OperatorGroup
+          metadata:
+            name: rhacm-operator
+            namespace: "{{ rhacm_namespace }}"
+          spec:
+            targetNamespaces:
+            - "{{ rhacm_namespace }}"
+        state: present
+
+    - name: Create the Subscription
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: operators.coreos.com/v1alpha1
+          kind: Subscription
+          metadata:
+            name: rhacm-operator
+            namespace: "{{ rhacm_namespace }}"
+          spec:
+            channel: "{{ rhacm_channel }}"
+            installPlanApproval: Automatic
+            name: advanced-cluster-management
+            source: redhat-operators
+            sourceNamespace: openshift-marketplace
+            startingCSV: "{{ rhacm_csv_name }}"
+        state: present
+
+    - name: Wait for the ClusterServiceVersion to succeed
+      kubernetes.core.k8s_info:
+        api_version: operators.coreos.com/v1alpha1
+        kind: ClusterServiceVersion
+        name: "{{ rhacm_csv_name }}"
+        namespace: "{{ rhacm_namespace }}"
+      register: __rhacm_csv
+      delay: 30
+      retries: 10
+      until:
+      - __rhacm_csv.resources | length > 0
+      - __rhacm_csv.resources[0].status is defined
+      - __rhacm_csv.resources[0].status.phase is defined
+      - __rhacm_csv.resources[0].status.phase == "Succeeded"
+...

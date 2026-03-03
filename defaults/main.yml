@@ -1,0 +1,30 @@
+---
+# tasks/install.yml
+rhacm_namespace: open-cluster-management
+rhacm_channel: ''
+rhacm_version: ''
+
+# tasks/configure.yml
+rhacm_install_profile: standard
+rhacm_profile:
+  minimal:
+    availabilityConfig: Basic
+    overrides:
+      components:
+        - { name: app-lifecycle, enabled: false }
+        - { name: cluster-backup, enabled: false }
+        - { name: cluster-lifecycle, enabled: true }
+        - { name: insights, enabled: false }
+        - { name: multicluster-observability, enabled: false }
+        - { name: search, enabled: false }
+        - { name: submariner-addon, enabled: false }
+        - { name: siteconfig, enabled: false }
+        - { name: volsync, enabled: false }
+  standard:
+    availabilityConfig: High
+
+# tasks/uninstall.yml
+rhacm_namespaces_to_delete:
+  - "{{ rhacm_namespace }}"
+  - hive
+...

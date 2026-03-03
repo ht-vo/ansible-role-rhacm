@@ -1,0 +1,31 @@
+---
+- name: Initialize the RHACM hub
+  block:
+    - name: "Create the MultiClusterHub (Profile: {{ rhacm_install_profile }})"
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: operator.open-cluster-management.io/v1
+          kind: MultiClusterHub
+          metadata:
+            name: multiclusterhub
+            namespace: "{{ rhacm_namespace }}"
+          spec: "{{ rhacm_profile[rhacm_install_profile] }}"
+        state: present
+
+    - name: Wait for the MultiClusterHub to be complete
+      kubernetes.core.k8s_info:
+        api_version: operator.open-cluster-management.io/v1
+        kind: MultiClusterHub
+        name: multiclusterhub
+        namespace: "{{ rhacm_namespace }}"
+      register: __rhacm_hub_mch
+      delay: 60
+      retries: 30
+      until:
+        - __rhacm_hub_mch.resources | length > 0
+        - __rhacm_hub_mch.resources[0].status.conditions is defined
+        - __rhacm_hub_mch.resources[0].status.conditions
+            | selectattr('type','equalto','Complete')
+            | selectattr('status','equalto','True')
+            | list | length > 0
+...

@@ -1,0 +1,40 @@
+---
+- name: Run pre-flight checks
+  tags:
+    - always
+  ansible.builtin.include_tasks:
+    file: check.yml
+    apply:
+      tags:
+        - rhacm_install
+        - rhacm_configure
+        - rhacm_uninstall
+
+- name: Install the RHACM operator
+  tags:
+    - rhacm_install
+  ansible.builtin.include_tasks:
+    file: install.yml
+    apply:
+      tags:
+        - rhacm_install
+
+- name: Configure the RHACM hub cluster
+  tags:
+    - rhacm_configure
+  ansible.builtin.include_tasks:
+    file: configure.yml
+    apply:
+      tags:
+        - rhacm_configure
+  
+- name: Uninstall the RHACM operator
+  tags:
+    - rhacm_uninstall
+    - never
+  ansible.builtin.include_tasks:
+    file: uninstall.yml
+    apply:
+      tags:
+        - rhacm_uninstall
+...
